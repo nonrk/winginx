@@ -23,9 +23,14 @@ public:
 	CString Int2CString(int Num);
 	vector<CString> getProcessAll();
 	void writeLog(CListCtrl *list, CString str);
+	void writeState(CListCtrl *list, CString str, CString state);
 	CString GetDirectory();
 	void writeList(CListCtrl *list, vector<CString> str, int len);
 	CString getConfig(CString node, CString key, CString iniPath);
 	BOOL setConfig(CString node, CString key, CString values, CString iniPath);
+	void makeFolder(CString folderName);
+	void copyFiles(CString srcDir, CString dstDir, CString fileExtension);
+	void deleteDirectory(CString dirPath);
+	BOOL copyDirectory(CString strSrcPath, CString strDesPath, BOOL bFailIfExists);
 };
 

@@ -427,6 +427,11 @@ void WNGlobal::writeLog(CListCtrl *list,CString str){
 	list->InsertItem(nIndex, str);
 	list->SetItemText(nIndex, 1, init_time);
 }
+void WNGlobal::writeState(CListCtrl *list, CString str, CString state){
+	int nIndex = list->GetItemCount();
+	list->InsertItem(nIndex, str);
+	list->SetItemText(nIndex, 1, state);
+}
 void WNGlobal::writeList(CListCtrl *list, vector<CString> str,int len){
 
 	int nIndex = list->GetItemCount();
@@ -466,4 +471,82 @@ CString WNGlobal::getConfig(CString node, CString key, CString iniPath){
 }
 BOOL WNGlobal::setConfig(CString node, CString key, CString values, CString iniPath){
 	return WritePrivateProfileString(node, key, values, iniPath);
+}
+void WNGlobal::makeFolder(CString folderName)
+{
+     CFileFind m_sFileFind;
+	 if (!m_sFileFind.FindFile(folderName))
+	{
+		CreateDirectory(folderName, NULL);
+	}
+}
+void WNGlobal::copyFiles(CString srcDir, CString dstDir, CString fileExtension)
+{
+	CString fullPath = srcDir + _T(".") + fileExtension;
+	CString dstPath = dstDir + _T(".") + fileExtension;
+	CFileFind finder;
+	if (finder.FindFile(fullPath))
+	{
+		CopyFile(fullPath, dstPath, false);
+	}
+
+	finder.Close();
+}
+void WNGlobal::deleteDirectory(CString dirPath)
+{
+	CFileFind finder;
+	CString path;
+	path.Format(_T("%s/*.*"), dirPath);
+	BOOL bWorking = finder.FindFile(path);
+	while (bWorking){
+		bWorking = finder.FindNextFile();
+		if (finder.IsDirectory() && !finder.IsDots()){//处理文件夹
+			deleteDirectory(finder.GetFilePath()); //递归删除文件夹
+			RemoveDirectory(finder.GetFilePath());
+		}
+		else{//处理文件
+			DeleteFile(finder.GetFilePath());
+		}
+	}
+}
+BOOL WNGlobal::copyDirectory(CString strSrcPath, CString strDesPath, BOOL bFailIfExists/*=FALSE*/)
+{
+	if (strSrcPath.IsEmpty())
+	{
+		AfxMessageBox(_T("源文件名为空，无法进行拷贝!"));
+		return FALSE;
+	}
+	CFileFind m_sFileFind;
+	if (!m_sFileFind.FindFile(strDesPath))
+	{
+		makeFolder(strDesPath);
+	}
+
+	if (strSrcPath.GetAt(strSrcPath.GetLength() - 1) != '\\')
+		strSrcPath += '\\';
+	if (strDesPath.GetAt(strDesPath.GetLength() - 1) != '\\')
+		strDesPath += '\\';
+
+	BOOL bRet = FALSE; 
+	CFileFind ff;
+	BOOL bFound = ff.FindFile(strSrcPath + "*", 0);
+	while (bFound)
+	{
+		bFound = ff.FindNextFile();
+		if (ff.GetFileName() == "." || ff.GetFileName() == "..")
+			continue;
+
+		CString strSubSrcPath = ff.GetFilePath();
+		CString strSubDespath = strSubSrcPath;
+		strSubDespath.Replace(strSrcPath, strDesPath);
+
+		if (ff.IsDirectory())
+			bRet = copyDirectory(strSubSrcPath, strSubDespath, bFailIfExists);     // 递归拷贝文件夹
+		else
+			bRet = CopyFile(strSubSrcPath, strSubDespath, bFailIfExists);   // 拷贝文件
+		if (!bRet)
+			break;
+	}
+	ff.Close();
+	return bRet;
 }

@@ -6,7 +6,7 @@
 #include "WnweblistDlg.h"
 #include "afxdialogex.h"
 #include "WNGlobal.h"
-
+#include "WNaddwebDlg.h"
 // CWnweblistDlg ¶Ô»°¿ò
 WNGlobal wwng;
 IMPLEMENT_DYNAMIC(CWnweblistDlg, CDialogEx)
@@ -110,7 +110,13 @@ void CWnweblistDlg::OnNMDblclkWeb(NMHDR *pNMHDR, LRESULT *pResult)
 
 	CString name = m_list.GetItemText(index, 0);
 	CString domain = m_list.GetItemText(index, 1);
-	CString port = m_list.GetItemText(index, 3);
-	CString root = m_list.GetItemText(index, 4);
+	CString port = m_list.GetItemText(index, 2);
+	CString root = m_list.GetItemText(index, 3);
+	CWNaddwebDlg dlg;
+	dlg.g_domain=domain;
+	dlg.g_root=root;
+	dlg.g_port=port;
+	dlg.g_name=name;
+	dlg.DoModal();
 
 }

@@ -20,6 +20,10 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
+	CString g_name;
+	CString g_domain;
+	CString g_port;
+	CString g_root;
 	CEdit m_domain;
 	CEdit m_root;
 	afx_msg void OnBtnOpenDir();

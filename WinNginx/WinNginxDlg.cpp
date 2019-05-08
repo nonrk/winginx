@@ -4,11 +4,15 @@
 #include "windows.h"
 #include "winbase.h"
 #include <shellapi.h>
+#include <msi.h>
 #include "WinNginx.h"
 #include "WinNginxDlg.h"
 #include "WNaddwebDlg.h"
 #include "WNGlobal.h"
 #include "WnweblistDlg.h"
+#include "WNbackDlg.h"
+#include "WNswitchDlg.h"
+#pragma comment(lib,"Msi.lib")
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -18,7 +22,7 @@
 #define IDR_SYS_START 12
 #define IDR_SYS_STOP 13
 #define IDR_SYS_RESTART 14
-
+#define IDR_SYS_EXIT 15
 WNGlobal wng;
 vector <int> serverState = {0,0,0};
 long start_time;
@@ -152,7 +156,12 @@ void CWinNginxDlg::Init(){
 	//初始显示信息
 	CString pv = wng.GetFileVersion(wng.GetAppPath() + _T("\\application\\php\\php.exe"));
 	vector <CString> nv = wng.getFileContent(wng.GetAppPath() + _T("\\application\\nginx\\version.txt"));
-	CString sv = wng.GetFileVersion(wng.GetAppPath() + _T("\\WinNginx.exe"));
+#if _DEBUG
+	CString sv = wng.GetFileVersion(wng.GetAppPath() + _T("\\winginxD.exe"));
+#else
+	CString sv = wng.GetFileVersion(wng.GetAppPath() + _T("\\winginx.exe"));
+#endif
+	
 	CString mv = wng.GetFileVersion(wng.GetAppPath() + _T("\\application\\mysql\\bin\\mysql.exe"));
 	vector <CString> pvi;
 	pvi = wng.SplitCString(pv, _T("."));
@@ -231,9 +240,9 @@ void CWinNginxDlg::Init(){
 	dwStyle |= LVS_EX_GRIDLINES;
 	m_log.SetExtendedStyle(dwStyle);
 	dwStyle |= LVS_EX_FULLROWSELECT;
-	m_log.InsertColumn(0, NULL, LVCFMT_LEFT, 160);
-	m_log.InsertColumn(1, NULL, LVCFMT_LEFT, 160);
-	wng.writeLog(&m_log, _T("欢迎使用WinNginx"));
+	m_log.InsertColumn(0, NULL, LVCFMT_LEFT, 210);
+	m_log.InsertColumn(1, NULL, LVCFMT_LEFT, 140);
+	wng.writeLog(&m_log, _T("欢迎使用winginx"));
 	//初始化运行时间
 	start_time = GetTickCount();
 	SetTimer(2, 1000, NULL);
@@ -276,6 +285,7 @@ LRESULT CWinNginxDlg::OnShowTask(WPARAM wParam, LPARAM lParam)
 		menu.AppendMenu(MFT_STRING, IDR_SYS_START, _T("启动服务"));
 		menu.AppendMenu(MFT_STRING, IDR_SYS_STOP, _T("停止服务"));
 		menu.AppendMenu(MFT_STRING, IDR_SYS_RESTART, _T("重启服务"));
+		menu.AppendMenu(MFT_STRING, IDR_SYS_EXIT, _T("退出"));
 		SetForegroundWindow();
 		if (serverState[0] + serverState[1] + serverState[2]>1)
 		{
@@ -303,6 +313,10 @@ LRESULT CWinNginxDlg::OnShowTask(WPARAM wParam, LPARAM lParam)
 		}
 		else if (mc = IDR_SYS_RESTART){
 			OnBtnRestart();
+		}
+		else if (mc = IDR_SYS_EXIT){
+			OnBtnStop();
+			PostMessage(WM_QUIT, 0, 0);
 		}
 		HMENU hmenu = menu.Detach();
 		menu.DestroyMenu();
@@ -343,6 +357,19 @@ void CWinNginxDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	{
 		this->ShowWindow(SW_HIDE);
 		toTray();
+	}
+	else if (nID == SC_CLOSE)
+	{
+		UINT i;
+		i = MessageBox(_T("关闭程序并退出？选择否最小化到托盘。"), _T("温馨提示"), MB_YESNO | MB_ICONQUESTION);
+		if (i == IDNO)
+		{
+			toTray();
+		}
+		else
+		{
+			PostMessage(WM_QUIT, 0, 0);
+		}
 	}
 	else
 	{
@@ -619,13 +646,111 @@ void CWinNginxDlg::OndBtnAddWeb()
 
 void CWinNginxDlg::OnBtnCheckRuntime()
 {
-	// TODO:  在此添加控件通知处理程序代码
+	wng.writeLog(&m_log, _T("Visual C++ Redistributable checking..."));
+	//2005 sp1 x86
+	if (MsiQueryProductState(_T("{A49F249F-0C91-497F-86DF-B2585E8E76B7}")) != -1){
+		wng.writeState(&m_log, _T("VC 2005 Redistributable"), _T("Installed"));
+	}
+	else
+	{
+		wng.writeState(&m_log, _T("VC 2005 Redistributable"), _T("No Install"));
+	}
+	//2005 x64
+	if (MsiQueryProductState(_T("{6E8E85E8-CE4B-4FF5-91F7-04999C9FAE6A}")) != -1){
+		wng.writeState(&m_log, _T("VC 2005 x64 Redistributable"), _T("Installed"));
+	}
+	else
+	{
+		wng.writeState(&m_log, _T("VC 2005 x64 Redistributable"), _T("No Install"));
+
+	}
+	//2008 x86
+	if (MsiQueryProductState(_T("{FF66E9F6-83E7-3A3E-AF14-8DE9A809A6A4}")) != -1){
+		wng.writeState(&m_log, _T("VC 2008 Redistributable"), _T("Installed"));
+	}
+	else
+	{
+		wng.writeState(&m_log, _T("VC 2008 Redistributable"), _T("No Install"));
+
+	}
+	//2008 x64
+	if (MsiQueryProductState(_T("{350AA351-21FA-3270-8B7A-835434E766AD}")) != -1){
+		wng.writeState(&m_log, _T("VC 2008 x64 Redistributable"), _T("Installed"));
+	}
+	else
+	{
+		wng.writeState(&m_log, _T("VC 2008 x64 Redistributable"), _T("No Install"));
+
+	}
+	//2008 sp1 x86
+	if (MsiQueryProductState(_T("{9A25302D-30C0-39D9-BD6F-21E6EC160475}")) != -1){
+		wng.writeState(&m_log, _T("VC 2008 Redistributable"), _T("Installed"));
+	}
+	else
+	{
+		wng.writeState(&m_log, _T("VC 2008 Redistributable"), _T("No Install"));
+
+	}
+	//2008 sp1 x64
+	if (MsiQueryProductState(_T("{8220EEFE-38CD-377E-8595-13398D740ACE}")) != -1){
+		wng.writeState(&m_log, _T("VC 2008 sp1 x64 Redistributable"), _T("Installed"));
+	}
+	else
+	{
+		wng.writeState(&m_log, _T("VC 2008 sp1 x64 Redistributable"), _T("No Install"));
+
+	}
+	//2012 x64
+	if (MsiQueryProductState(_T("{764384C5-BCA9-307C-9AAC-FD443662686A}")) != -1){
+		wng.writeState(&m_log, _T("VC 2012 x64 Redistributable"), _T("Installed"));
+	}
+	else
+	{
+		wng.writeState(&m_log, _T("VC 2012 x64 Redistributable"), _T("No Install"));
+
+	}
+	//2012 x86 vc11
+	if (MsiQueryProductState(_T("{764384C5-BCA9-307C-9AAC-FD443662686A}")) != -1){
+		wng.writeState(&m_log, _T("VC 2012 x64 Redistributable"), _T("Installed"));
+	}
+	else
+	{
+		wng.writeState(&m_log, _T("VC 2012 x64 Redistributable"), _T("No Install"));
+
+	}
+	//2012 x64 vc11
+	if (MsiQueryProductState(_T("{B175520C-86A2-35A7-8619-86DC379688B9}")) != -1){
+		wng.writeState(&m_log, _T("VC 2012 x64 Redistributable"), _T("Installed"));
+	}
+	else
+	{
+		wng.writeState(&m_log, _T("VC 2012 x64 Redistributable"), _T("No Install"));
+
+	}
+	//2015 x86 vc14
+	if (MsiQueryProductState(_T("{8c3f057e-d6a6-4338-ac6a-f1c795a6577b}")) != -1){
+		wng.writeState(&m_log, _T("VC 2015 x86 Redistributable"), _T("Installed"));
+	}
+	else
+	{
+		wng.writeState(&m_log, _T("VC 2015 x86 Redistributable"), _T("No Install"));
+
+	}
+	//2015 x64 vc14
+	if (MsiQueryProductState(_T("{7b178cda-9740-4701-a92a-f168d213b343}")) != -1){
+		wng.writeState(&m_log, _T("VC 2015 x64 Redistributable"), _T("Installed"));
+	}
+	else
+	{
+		wng.writeState(&m_log, _T("VC 2015 x64 Redistributable"), _T("No Install"));
+
+	}
+	wng.writeLog(&m_log, _T("VC Redistributable checked."));
 }
-
-
 void CWinNginxDlg::OnBtnServerback()
 {
-	// TODO:  在此添加控件通知处理程序代码
+	CWNbackDlg dlg;
+	dlg.DoModal();
 }
 
 
@@ -634,6 +759,9 @@ void CWinNginxDlg::OnMenuFiveTwo()
 	//判断版本是否存在
 	switchPhpVersion(ID_PHP_FIVETWO);
 	//复制文件操作
+	CWNswitchDlg dlg;
+	dlg.version = 52;
+	dlg.DoModal();
 }
 
 
@@ -641,31 +769,45 @@ void CWinNginxDlg::OnMenuFiveSix()
 {
 	//判断版本是否存在
 	switchPhpVersion(ID_PHP_FIVESIX);
-	//复制文件操作
+	CWNswitchDlg dlg;
+	dlg.version = 56;
+	dlg.DoModal();
 }
 
 
 void CWinNginxDlg::OnMenuSeven()
 {
 	switchPhpVersion(ID_PHP_SEVEN);
+	CWNswitchDlg dlg;
+	dlg.version = 70;
+	dlg.DoModal();
 }
 
 
 void CWinNginxDlg::OnMenuSevenOne()
 {
 	switchPhpVersion(ID_PHP_SEVEN_ONE);
+	CWNswitchDlg dlg;
+	dlg.version = 71;
+	dlg.DoModal();
 }
 
 
 void CWinNginxDlg::OnMenuSevenTwo()
 {
 	switchPhpVersion(ID_PHP_SEVENTWO);
+	CWNswitchDlg dlg;
+	dlg.version = 72;
+	dlg.DoModal();
 }
 
 
 void CWinNginxDlg::OnMenuSevenThree()
 {
 	switchPhpVersion(ID_PHP_SEVENTHREE);
+	CWNswitchDlg dlg;
+	dlg.version = 73;
+	dlg.DoModal();
 }
 
 

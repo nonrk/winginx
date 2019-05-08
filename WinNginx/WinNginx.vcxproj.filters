@@ -42,6 +42,12 @@
     <ClInclude Include="WnweblistDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="WNbackDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="WNswitchDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WinNginx.cpp">
@@ -60,6 +66,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="WnweblistDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WNbackDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WNswitchDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

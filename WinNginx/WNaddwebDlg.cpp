@@ -49,8 +49,19 @@ BOOL CWNaddwebDlg::OnInitDialog()
 }
 void CWNaddwebDlg::Init(){
 	//初始化默认目录
-	m_root.SetWindowText(awng.GetAppPath() + _T("\\wwwroot"));
-	m_port.SetWindowText(_T("80"));
+	if (g_name.GetLength()!=0)
+	{
+		m_port.SetWindowText(g_port);
+		m_domain.SetWindowText(g_domain);
+		m_root.SetWindowText(g_root);
+		m_name.SetWindowText(g_name);
+	}
+	else
+	{
+		m_root.SetWindowText(awng.GetAppPath() + _T("\\wwwroot"));
+		m_port.SetWindowText(_T("80"));
+	}
+	
 }
 void CWNaddwebDlg::AddWebSite(CString root, CString name, CString port, CString domain,int https=0)
 {
@@ -101,7 +112,27 @@ void CWNaddwebDlg::AddWebSite(CString root, CString name, CString port, CString 
 	}
 	else
 	{
-		AfxMessageBox(_T("该网站已经存在"));
+		UINT i;
+		i = MessageBox(_T("网站已存在，确认要覆盖此网站吗？"), _T("温馨提示"), MB_YESNO | MB_ICONQUESTION);
+		if (i == IDNO)
+		{
+			return;
+		}
+		else
+		{
+			DeleteFile(awng.GetAppPath() + _T("\\application\\nginx\\conf\\vhost\\" + domain + _T(".conf")));
+			File.Open(awng.GetAppPath() + _T("\\application\\nginx\\conf\\vhost\\" + domain + _T(".conf")), CFile::modeCreate | CFile::modeReadWrite);
+			File.WriteString(strText);
+			if (awng.IsFileExist(awng.GetAppPath() + _T("\\application\\nginx\\conf\\vhost\\" + domain + _T(".conf")))){
+				awng.setConfig(_T("网站配置列表"), name, name + _T("|") + domain + _T("|") + port + _T("|") + root, awng.GetAppPath() + _T("\\\\application\\webList.ini"));
+				if (AfxMessageBox(_T("网站创建成功，是否重启服务器？"), MB_OKCANCEL) == IDOK){
+					awn->OnBtnRestart();
+				}
+			}
+			strText.ReleaseBuffer();
+			File.Close();
+		}
+		CDialog::EndDialog(0);
 	}
 }
 void CWNaddwebDlg::OnBtnOpenDir()
