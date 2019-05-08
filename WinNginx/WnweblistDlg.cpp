@@ -110,6 +110,7 @@ void CWnweblistDlg::OnNMDblclkWeb(NMHDR *pNMHDR, LRESULT *pResult)
 
 	CString name = m_list.GetItemText(index, 0);
 	CString domain = m_list.GetItemText(index, 1);
+<<<<<<< HEAD
 	CString port = m_list.GetItemText(index, 2);
 	CString root = m_list.GetItemText(index, 3);
 	CWNaddwebDlg dlg;
@@ -118,5 +119,11 @@ void CWnweblistDlg::OnNMDblclkWeb(NMHDR *pNMHDR, LRESULT *pResult)
 	dlg.g_port=port;
 	dlg.g_name=name;
 	dlg.DoModal();
+=======
+	CString port = m_list.GetItemText(index, 3);
+	CString root = m_list.GetItemText(index, 4);
+	CWNaddwebDlg dlg;
+
+>>>>>>> cef3ab5e802a25b82901a639896cfe14deb257bb
 
 }
