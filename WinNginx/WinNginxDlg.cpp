@@ -4,6 +4,7 @@
 #include "windows.h"
 #include "winbase.h"
 #include <shellapi.h>
+#include <atlconv.h>
 #include <msi.h>
 #include "WinNginx.h"
 #include "WinNginxDlg.h"
@@ -11,7 +12,7 @@
 #include "WNGlobal.h"
 #include "WnweblistDlg.h"
 #include "WNbackDlg.h"
-#include "WNswitchDlg.h"
+#include "unZipPack.h"
 #pragma comment(lib,"Msi.lib")
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -23,7 +24,16 @@
 #define IDR_SYS_STOP 13
 #define IDR_SYS_RESTART 14
 #define IDR_SYS_EXIT 15
+
+#define PHP_VSRSION_FIVETWO 52
+#define PHP_VSRSION_FIVESEX 56
+#define PHP_VSRSION_SEVEN 70
+#define PHP_VSRSION_SEVENONE 71
+#define PHP_VSRSION_SEVENTWO 72
+#define PHP_VSRSION_SEVENTHREE 73
+
 WNGlobal wng;
+unZipPack uzip;
 vector <int> serverState = {0,0,0};
 long start_time;
 int php_version;
@@ -155,6 +165,7 @@ void CWinNginxDlg::Init(){
 	}
 	//初始显示信息
 	CString pv = wng.GetFileVersion(wng.GetAppPath() + _T("\\application\\php\\php.exe"));
+	
 	vector <CString> nv = wng.getFileContent(wng.GetAppPath() + _T("\\application\\nginx\\version.txt"));
 #if _DEBUG
 	CString sv = wng.GetFileVersion(wng.GetAppPath() + _T("\\winginxD.exe"));
@@ -163,18 +174,25 @@ void CWinNginxDlg::Init(){
 #endif
 	
 	CString mv = wng.GetFileVersion(wng.GetAppPath() + _T("\\application\\mysql\\bin\\mysql.exe"));
-	vector <CString> pvi;
-	pvi = wng.SplitCString(pv, _T("."));
-
-	if (wng.IsFileExist(wng.GetAppPath() + _T("\\webserver\\php\\php" + pvi[0] + _T("ts.dll"))))
+	if (wng.IsFileExist(pv))
 	{
-		m_info_php.SetWindowText(pv);
+		vector <CString> pvi;
+		pvi = wng.SplitCString(pv, _T("."));
+
+		if (wng.IsFileExist(wng.GetAppPath() + _T("\\webserver\\php\\php" + pvi[0] + _T("ts.dll"))))
+		{
+			m_info_php.SetWindowText(pv);
+		}
+		else
+		{
+			m_info_php.SetWindowText(pv + _T("-nts"));
+		}
 	}
 	else
 	{
-		m_info_php.SetWindowText(pv + _T("-nts"));
+		m_info_php.SetWindowText(_T("php 目录为空"));
 	}
-
+	
 	CString os_version, os_info;
 
 	wng.GetOSVersion(os_version, os_info);
@@ -247,7 +265,7 @@ void CWinNginxDlg::Init(){
 	start_time = GetTickCount();
 	SetTimer(2, 1000, NULL);
 	//
-	switchPhpVersion(ID_PHP_SEVEN_ONE);
+	switchPhpVersionMenu(ID_PHP_SEVEN_ONE);
 }
 void CWinNginxDlg::toTray()//最小化到托盘
 {
@@ -315,8 +333,8 @@ LRESULT CWinNginxDlg::OnShowTask(WPARAM wParam, LPARAM lParam)
 			OnBtnRestart();
 		}
 		else if (mc = IDR_SYS_EXIT){
-			OnBtnStop();
 			PostMessage(WM_QUIT, 0, 0);
+			OnBtnStop();
 		}
 		HMENU hmenu = menu.Detach();
 		menu.DestroyMenu();
@@ -521,7 +539,7 @@ void CWinNginxDlg::OnTimer(UINT_PTR nIDEvent)
 	CDialogEx::OnTimer(nIDEvent);
 }
 
-void CWinNginxDlg::switchPhpVersion(int Ids){
+void CWinNginxDlg::switchPhpVersionMenu(int Ids){
 	CMenu *pMenu = GetMenu();
 	ASSERT_VALID(pMenu);
 	CMenu *pSubMenu = pMenu->GetSubMenu(1);
@@ -747,6 +765,141 @@ void CWinNginxDlg::OnBtnCheckRuntime()
 	}
 	wng.writeLog(&m_log, _T("VC Redistributable checked."));
 }
+void CWinNginxDlg::switchPhpVersion(int version,int type){
+	switch (version)
+	{
+	case PHP_VSRSION_FIVETWO:
+		if (type == 1001){
+			switchPhp(_T("5.2"), version);
+		}
+		if (type == 1002){
+			switchPhp(_T("5.2-nts"), version);
+		}
+		if (type == 1003){
+			switchPhp(_T("5.2_x64"), version);
+		}
+		if (type == 1004){
+			switchPhp(_T("5.2-nts_x64"), version);
+		}
+		break;
+	case PHP_VSRSION_FIVESEX:
+		if (type == 1001){
+			switchPhp(_T("5.6"), version);
+		}
+		if (type == 1002){
+			switchPhp(_T("5.6-nts"), version);
+		}
+		if (type == 1003){
+			switchPhp(_T("5.6_x64"), version);
+		}
+		if (type == 1004){
+			switchPhp(_T("5.6-nts_x64"), version);
+		}
+		break;
+	case PHP_VSRSION_SEVEN:
+		if (type == 1001){
+			switchPhp(_T("7.0"), version);
+		}
+		if (type == 1002){
+			switchPhp(_T("7.0-nts"), version);
+		}
+		if (type == 1003){
+			switchPhp(_T("7.0_x64"), version);
+		}
+		if (type == 1004){
+			switchPhp(_T("7.0-nts_x64"), version);
+		}
+		break;
+	case PHP_VSRSION_SEVENONE:
+		if (type == 1001){
+			switchPhp(_T("7.1"), version);
+		}
+		if (type == 1002){
+			switchPhp(_T("7.1-nts"), version);
+		}
+		if (type == 1003){
+			switchPhp(_T("7.1_x64"), version);
+		}
+		if (type == 1004){
+			switchPhp(_T("7.1-nts_x64"), version);
+		}
+		break;
+	case PHP_VSRSION_SEVENTWO:
+		if (type == 1001){
+			switchPhp(_T("7.2"), version);
+		}
+		if (type == 1002){
+			switchPhp(_T("7.2-nts"), version);
+		}
+		if (type == 1003){
+			switchPhp(_T("7.2_x64"), version);
+		}
+		if (type == 1004){
+			switchPhp(_T("7.2-nts_x64"), version);
+		}
+		break;
+	case PHP_VSRSION_SEVENTHREE:
+		if (type == 1001){
+			switchPhp(_T("7.3"), version);
+		}
+		if (type == 1002){
+			switchPhp(_T("7.3-nts"), version);
+		}
+		if (type == 1003){
+			switchPhp(_T("7.3_x64"), version);
+		}
+		if (type == 1004){
+			switchPhp(_T("7.3-nts_x64"), version);
+		}
+		break;
+	default:
+		return;
+		break;
+	}
+}
+void CWinNginxDlg::switchPhp(CString v, int Ids){
+	
+	wng.writeLog(&m_log, _T("php版本切换中..."));
+	CopyFile(wng.GetAppPath() + _T("\\application\\php\\php.ini"), wng.GetAppPath() + _T("\\application\\php_ext\\php_back.ini"), TRUE);
+	m_strPath = wng.GetAppPath() + _T("\\application\\php_ext\\php-") + v + _T(".zip");
+	m_desPath = wng.GetAppPath() + _T("\\application\\php");
+	wng.deleteDirectory(m_desPath);
+	wng.writeLog(&m_log, _T("清除旧版本..."));
+	m_strPath = _T("D:\\client\\winginx\\winginx\\application\\php_ext\\php-5.2.zip");
+	if (!wng.IsFileExist(m_strPath))
+	{
+		wng.writeLog(&m_log, _T("php版本不存在..."));
+		return;
+	}
+	else
+	{
+		char* filepath;
+		char* despath;
+		USES_CONVERSION;
+		filepath = T2A(m_strPath);
+		despath = T2A(m_desPath);
+		string sp = filepath;
+		string dp = despath;
+
+		string srcFilePath = "D:\\client\\winginx\\winginx\\application\\php_ext\\php-5.2.zip";
+		string tempdir = "D:\\www";
+		if (!::PathFileExistsA(tempdir.c_str()))
+		{
+			wng.CreatedMultipleDirectory(tempdir);
+		}
+		//wng.UnzipFile(sp, tempdir)
+		if (wng.UnzipFile(srcFilePath, tempdir)){
+			wng.writeLog(&m_log, _T("php版本已切换至") + v + _T("..."));
+			wng.writeLog(&m_log, _T("重启服务器..."));
+			switchPhpVersionMenu(Ids);
+			OnBtnRestart();
+		}
+		else
+		{
+			wng.writeLog(&m_log, _T("php版本切换失败..."));
+		}
+	}
+}
 void CWinNginxDlg::OnBtnServerback()
 {
 	CWNbackDlg dlg;
@@ -756,58 +909,40 @@ void CWinNginxDlg::OnBtnServerback()
 
 void CWinNginxDlg::OnMenuFiveTwo()
 {
-	//判断版本是否存在
-	switchPhpVersion(ID_PHP_FIVETWO);
-	//复制文件操作
-	CWNswitchDlg dlg;
-	dlg.version = 52;
-	dlg.DoModal();
+	switchPhpVersion(52,1001);
 }
 
 
 void CWinNginxDlg::OnMenuFiveSix()
 {
-	//判断版本是否存在
-	switchPhpVersion(ID_PHP_FIVESIX);
-	CWNswitchDlg dlg;
-	dlg.version = 56;
-	dlg.DoModal();
+
+	switchPhpVersion(56, 1001);
+	
 }
 
 
 void CWinNginxDlg::OnMenuSeven()
 {
-	switchPhpVersion(ID_PHP_SEVEN);
-	CWNswitchDlg dlg;
-	dlg.version = 70;
-	dlg.DoModal();
+	switchPhpVersion(70, 1001);
+
 }
 
 
 void CWinNginxDlg::OnMenuSevenOne()
 {
-	switchPhpVersion(ID_PHP_SEVEN_ONE);
-	CWNswitchDlg dlg;
-	dlg.version = 71;
-	dlg.DoModal();
+	switchPhpVersion(71, 1001);
 }
 
 
 void CWinNginxDlg::OnMenuSevenTwo()
 {
-	switchPhpVersion(ID_PHP_SEVENTWO);
-	CWNswitchDlg dlg;
-	dlg.version = 72;
-	dlg.DoModal();
+	switchPhpVersion(72, 1001);
 }
 
 
 void CWinNginxDlg::OnMenuSevenThree()
 {
-	switchPhpVersion(ID_PHP_SEVENTHREE);
-	CWNswitchDlg dlg;
-	dlg.version = 73;
-	dlg.DoModal();
+	switchPhpVersion(73, 1001);
 }
 
 

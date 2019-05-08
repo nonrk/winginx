@@ -45,7 +45,7 @@
     <ClInclude Include="WNbackDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="WNswitchDlg.h">
+    <ClInclude Include="unZipPack.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -71,7 +71,7 @@
     <ClCompile Include="WNbackDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="WNswitchDlg.cpp">
+    <ClCompile Include="unZipPack.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

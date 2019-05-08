@@ -58,12 +58,14 @@ public:
 	CButton m_btn_web;
 	CButton m_btn_runtime;
 	CButton m_btn_server_back;
+	CString m_strPath;
+	CString m_desPath;
 	afx_msg void OnMenuAboutCompright();
 	afx_msg void OnBtnWebManage();
 	afx_msg void OndBtnAddWeb();
 	afx_msg void OnBtnCheckRuntime();
 	afx_msg void OnBtnServerback();
-	void switchPhpVersion(int Ids);
+	void switchPhpVersionMenu(int Ids);
 	afx_msg void OnMenuFiveSix();
 	afx_msg void OnMenuSeven();
 	afx_msg void OnMenuSevenOne();
@@ -79,4 +81,6 @@ public:
 	void DefWebSite(CString root, CString name, CString port, CString domain);
 	void DefMySqlSet();
 	void DefPhpSet();
+	void switchPhpVersion(int version, int type);
+	void switchPhp(CString v, int Ids);
 };
