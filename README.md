@@ -2,9 +2,13 @@
 windows nginx php mysql server manage program!
 
 低配资源包（包含一个php7.1版本）winginx-pack-0.1.3L.rar
+
 程序包 （只包含包含必要程序版本）winginx-0.1.3_mini.rar
+
 完整版 winginx-0.1.3A.rar
+
 低配版 winginx-0.1.3L.zip
+
 完整资源包 winginx-pack-0.1.3A.rar
 
 统一下载地址：链接:https://pan.baidu.com/s/1BSawr-goGhWfLx3VvywkfA 提取码: pc1b
