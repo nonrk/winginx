@@ -12,7 +12,7 @@
 #include "WNGlobal.h"
 #include "WnweblistDlg.h"
 #include "WNbackDlg.h"
-#include "unZipPack.h"
+#include "WNruntimeDlg.h"
 #pragma comment(lib,"Msi.lib")
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -33,7 +33,6 @@
 #define PHP_VSRSION_SEVENTHREE 73
 
 WNGlobal wng;
-unZipPack uzip;
 vector <int> serverState = {0,0,0};
 long start_time;
 int php_version;
@@ -861,37 +860,43 @@ void CWinNginxDlg::switchPhp(CString v, int Ids){
 	
 	wng.writeLog(&m_log, _T("php版本切换中..."));
 	CopyFile(wng.GetAppPath() + _T("\\application\\php\\php.ini"), wng.GetAppPath() + _T("\\application\\php_ext\\php_back.ini"), TRUE);
-	m_strPath = wng.GetAppPath() + _T("\\application\\php_ext\\php-") + v + _T(".zip");
+	m_strPath = wng.GetAppPath() + _T("\\application\\php_ext\\php-") + v + _T("-nts_x86.7z");
 	m_desPath = wng.GetAppPath() + _T("\\application\\php");
 	wng.deleteDirectory(m_desPath);
 	wng.writeLog(&m_log, _T("清除旧版本..."));
-	m_strPath = _T("D:\\client\\winginx\\winginx\\application\\php_ext\\php-5.2.zip");
 	if (!wng.IsFileExist(m_strPath))
 	{
 		wng.writeLog(&m_log, _T("php版本不存在..."));
+		UINT i;
+		i = MessageBox(_T("php版本不存在，是否安装？"), _T("温馨提示"), MB_YESNO | MB_ICONQUESTION);
+		if (i == IDNO)
+		{
+			return;
+		}
+		else
+		{
+			//安装php
+		}
 		return;
 	}
 	else
 	{
-		char* filepath;
-		char* despath;
-		USES_CONVERSION;
-		filepath = T2A(m_strPath);
-		despath = T2A(m_desPath);
-		string sp = filepath;
-		string dp = despath;
-
-		string srcFilePath = "D:\\client\\winginx\\winginx\\application\\php_ext\\php-5.2.zip";
-		string tempdir = "D:\\www";
-		if (!::PathFileExistsA(tempdir.c_str()))
-		{
-			wng.CreatedMultipleDirectory(tempdir);
-		}
-		//wng.UnzipFile(sp, tempdir)
-		if (wng.UnzipFile(srcFilePath, tempdir)){
+// 		char* filepath;
+// 		char* despath;
+// 		USES_CONVERSION;
+// 		filepath = T2A(m_strPath);
+// 		despath = T2A(m_desPath);
+// 		string sp = filepath;
+// 		string dp = despath;
+// 
+// 		string srcFilePath = "D:\\client\\winginx\\winginx\\application\\php_ext\\php-5.2.zip";
+// 		string tempdir = "D:\\www";
+//      wng.UnzipFile(sp, tempdir)
+		wng.writeLog(&m_log, _T("解压文件..."));
+		if (wng.Un7zZip(m_strPath, m_desPath, 0)==14){
+			switchPhpVersionMenu(Ids);
 			wng.writeLog(&m_log, _T("php版本已切换至") + v + _T("..."));
 			wng.writeLog(&m_log, _T("重启服务器..."));
-			switchPhpVersionMenu(Ids);
 			OnBtnRestart();
 		}
 		else
@@ -948,35 +953,41 @@ void CWinNginxDlg::OnMenuSevenThree()
 
 void CWinNginxDlg::OnMenuRuntimeInstall()
 {
-	// TODO:  在此添加命令处理程序代码
+	WNruntimeDlg dlg;
+	dlg.DoModal();
 }
 
 
 void CWinNginxDlg::OnMysqlRepwd()
 {
-	// TODO:  在此添加命令处理程序代码
+	ShellExecute(NULL, NULL, wng.GetAppPath() + _T("\\application\\mysql\\bin\\reset.bat"), NULL, NULL, SW_HIDE);
+	wng.writeLog(&m_log, _T("root密码已重置为root"));
 }
 
 
 void CWinNginxDlg::OnMysqlCmd()
 {
-	// TODO:  在此添加命令处理程序代码
+	//ShellExecute(NULL, NULL, wng.GetAppPath() + _T("\\application\\mysql\\bin\\cmd.bat"), NULL, NULL, SW_HIDE);
+	CString dir = _T("/k cd ") +wng.GetAppPath()+ _T("/application/mysql/bin");
+	wng.ShellRun(_T("cmd.exe"), dir, SW_SHOW);
 }
 
 
 void CWinNginxDlg::OnMenuSysSet()
 {
-	// TODO:  在此添加命令处理程序代码
+	AfxMessageBox(_T("咦，似乎还没想到要配置啥..."));
 }
 
 
 void CWinNginxDlg::OnMenuPhpConfig()
 {
-	// TODO:  在此添加命令处理程序代码
+	CString dir = wng.GetAppPath() + _T("\\application\\php\\php.ini");
+	wng.ShellRun(_T("notepad.exe "), dir, SW_SHOW);
 }
 
 
 void CWinNginxDlg::OnMenuNginxConfig()
 {
-	// TODO:  在此添加命令处理程序代码
+	CString dir = wng.GetAppPath() + _T("\\application\\nginx\\conf\\nginx.conf");
+	wng.ShellRun(_T("notepad.exe "), dir, SW_SHOW);
 }

@@ -3,9 +3,8 @@
 #include <windows.h>
 #include "psapi.h"
 #include <tlhelp32.h> 
-#include "zip.h"
-#include "unzip.h"
-#include "zlib.h"
+#include <thread>
+#include "7zlib.h"
 #pragma comment(lib,"version.lib")
 using namespace std;
 class WNGlobal
@@ -34,9 +33,7 @@ public:
 	void copyFiles(CString srcDir, CString dstDir, CString fileExtension);
 	void deleteDirectory(CString dirPath);
 	BOOL copyDirectory(CString strSrcPath, CString strDesPath, BOOL bFailIfExists);
-
-	int UnzipFile(const string& strFilePath, const string& strTempPath);
-	string& replace_all(string& str, const string& old_value, const string& new_value);
-	BOOL CreatedMultipleDirectory(const string& direct);
+	int Un7zZip(CString srcPath, CString desPath,int type);
+	DWORD ShellRun(CString csExe, CString csParam, DWORD nShow);
 };
 

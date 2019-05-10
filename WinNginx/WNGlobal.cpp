@@ -8,6 +8,37 @@ WNGlobal::WNGlobal()
 WNGlobal::~WNGlobal()
 {
 }
+enum ResultCode
+{
+	COMPRESS_BAD_SOURCE, // Compress Error: bad source.
+	COMPRESS_BAD_DEST, // Compress Error: bad dest.
+	COMPRESS_FIND_FILE_ERROR, // Compress Error: find file error.
+	COMPRESS_CREATE_ARCHIVE_FILE_ERROR, // Compress Error: create archive file error.
+	COMPRESS_GET_CLASS_OBJECT_ERROR, // Compress Error: get class object error.
+	COMPRESS_UPDATE_ERROR, // Compress Error: update error.
+	COMPRESS_GET_FAILED_FILES, // Compress Error: get failed files.
+	COMPRESS_OK, // Compress Successed: ok.
+
+	EXTRACT_BAD_SOURCE, // Extract Error: bad source.
+	EXTRACT_BAD_DEST, // Extract Error: bad dest.
+	EXTRACT_GET_CLASS_OBJECT_ERROR, // Extract Error: get class object error.
+	EXTRACT_OPEN_ARCHIVE_FILE_ERROR, // Extract Error: open archive file error.
+	EXTRACT_OPEN_FILE_AS_ARCHIVE_ERROR, // Extract Error: open file as archive error.
+	EXTRACT_FILES_ERROR, // Extract Error: files error.
+	EXTRACT_OK, // Extract Successed: ok.
+
+	LIST_GET_CLASS_OBJECT_ERROR, // List Error: get class object error.
+	LIST_OPEN_ARCHIVE_FILE_ERROR, // List Error: open archive file error.
+	LIST_OPEN_FILE_AS_ARCHIVE_ERROR, // List Error: open file as archive error.
+	LIST_OK, // List Successed: ok.
+
+	UNKNOW_ERROR // Error: Unknow result.
+};
+typedef void(*CallbackFunc)(float, void*);
+bool Initialize();
+ResultCode Compress(const wchar_t* source, const wchar_t* dest, CallbackFunc callback = 0, void* user = 0);
+ResultCode Uncompress(const wchar_t* source, const wchar_t* dest, CallbackFunc callback = 0, void* user = 0);
+void Uninitialize();
 CString WNGlobal::GetFileVersion(const CString& sTargetFileName)
 {
 	DWORD nInfoSize = 0, dwHandle = 0;
@@ -551,191 +582,77 @@ BOOL WNGlobal::copyDirectory(CString strSrcPath, CString strDesPath, BOOL bFailI
 	return bRet;
 
 }
-int WNGlobal::UnzipFile(const std::string& strFilePath, const std::string& strTempPath)
-{
-	int nReturnValue;
-	string tempFilePath;
-	string srcFilePath(strFilePath);
-	string destFilePath;
+int WNGlobal::Un7zZip(CString srcPath, CString desPath, int type){
+	typedef bool(*InitializeFunc)();
+	typedef SevenZip::ResultCode(*CompressFunc)(const wchar_t*, const wchar_t*, SevenZip::CallbackFunc, void*);
+	typedef SevenZip::ResultCode(*UncompressFunc)(const wchar_t*, const wchar_t*, SevenZip::CallbackFunc, void*);
+	typedef void(*UninitializeFunc)();
 
-	//std::cout << "Start unpacking the package... " << endl;
+	InitializeFunc initializeFunc = nullptr;
+	CompressFunc compressFunc = nullptr;
+	UncompressFunc uncompressFunc = nullptr;
+	UninitializeFunc uninitializeFunc = nullptr;
 
-	//打开zip文件
-	unzFile unzfile = unzOpen(srcFilePath.c_str());
-	if (unzfile == NULL)
+	// 替换成对应的路径
+	HMODULE hDLL = LoadLibrary(GetAppPath()+_T("\\7zlib.dll"));
+	if (hDLL != NULL)
 	{
-		return 0;
-	}
+		initializeFunc = (InitializeFunc)GetProcAddress(hDLL, "Initialize");
+		compressFunc = (CompressFunc)GetProcAddress(hDLL, "Compress");
+		uncompressFunc = (UncompressFunc)GetProcAddress(hDLL, "Uncompress");
+		uninitializeFunc = (UninitializeFunc)GetProcAddress(hDLL, "Uninitialize");
 
-	//获取zip文件的信息
-	unz_global_info* pGlobalInfo = new unz_global_info;
-	nReturnValue = unzGetGlobalInfo(unzfile, pGlobalInfo);
-	if (nReturnValue != UNZ_OK)
-	{
-		//std::cout << "The number of compressed package files is  " << pGlobalInfo->number_entry << endl;
-		return 0;
-	}
+		if (initializeFunc && compressFunc && uncompressFunc && uninitializeFunc)
+		{
+			bool result = initializeFunc();
+			if (result)
+			{
+				// 替换成对应的路径
+				if (type){
+					SevenZip::ResultCode resultCode = compressFunc(desPath, srcPath, nullptr, nullptr);
+					return resultCode;
+				}
+				else
+				{
 
+				}
 
-	//解析zip文件
-	unz_file_info* pFileInfo = new unz_file_info;
-	char szZipFName[MAX_PATH] = { 0 };
-	char szExtraName[MAX_PATH] = { 0 };
-	char szCommName[MAX_PATH] = { 0 };
-	//存放从zip中解析出来的内部文件名
-	for (int i = 0; i < pGlobalInfo->number_entry; i++)
-	{
-		//解析得到zip中的文件信息
-		nReturnValue = unzGetCurrentFileInfo(unzfile, pFileInfo, szZipFName, MAX_PATH, szExtraName, MAX_PATH, szCommName, MAX_PATH);
-		if (nReturnValue != UNZ_OK)
+				SevenZip::ResultCode resultCode = uncompressFunc(srcPath, desPath, nullptr, nullptr);
+				return resultCode;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		else
+		{
 			return 0;
-		//std::cout << "ZipName: " << szZipFName << "Extra: " << szExtraName << "Comm: " << szCommName << endl;
-		
-		string strZipFName = szZipFName;
-		if (pFileInfo->external_fa == FILE_ATTRIBUTE_DIRECTORY || (strZipFName.rfind('/') == strZipFName.length() - 1))
-		{
-			destFilePath = strTempPath + "//" + szZipFName;
-			CreateDirectoryA(destFilePath.c_str(), NULL);
 		}
-		else
-		{
-			//创建文件
-			string strFullFilePath;
-			tempFilePath = strTempPath + "/" + szZipFName;
-			strFullFilePath = tempFilePath;//保存完整路径
 
-			int nPos = tempFilePath.rfind("/");
-			int nPosRev = tempFilePath.rfind("\\");
-			if (nPosRev == string::npos && nPos == string::npos)
-				continue;
-
-			size_t nSplitPos = nPos > nPosRev ? nPos : nPosRev;
-			destFilePath = tempFilePath.substr(0, nSplitPos + 1);
-
-			if (!PathIsDirectoryA(destFilePath.c_str()))
-			{
-	
-				destFilePath = replace_all(destFilePath, "/", "\\");
-				
-				int bRet = CreatedMultipleDirectory(destFilePath);
-			}
-			strFullFilePath = replace_all(strFullFilePath, "/", "\\");
-
-			HANDLE hFile = CreateFileA(strFullFilePath.c_str(), GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_FLAG_WRITE_THROUGH, NULL);
-			if (hFile == INVALID_HANDLE_VALUE)
-			{
-				return 0;
-			}
-
-			//打开文件
-			nReturnValue = unzOpenCurrentFile(unzfile);
-			if (nReturnValue != UNZ_OK)
-			{
-				CloseHandle(hFile);
-				return 0;
-			}
-
-			//读取文件
-			uLong BUFFER_SIZE = pFileInfo->uncompressed_size;
-			void* szReadBuffer = NULL;
-			szReadBuffer = (char*)malloc(BUFFER_SIZE);
-			if (NULL == szReadBuffer)
-			{
-				break;
-			}
-
-			while (TRUE)
-			{
-				memset(szReadBuffer, 0, BUFFER_SIZE);
-				int nReadFileSize = 0;
-				CString mm;
-				mm.Format(_T("%d"), szReadBuffer);
-				//mm = strFilePath.c_str();
-				AfxMessageBox(mm);
-				nReadFileSize = unzReadCurrentFile(unzfile, szReadBuffer, BUFFER_SIZE);
-
-				if (nReadFileSize < 0)					 //读取文件失败
-				{
-					unzCloseCurrentFile(unzfile);
-					CloseHandle(hFile);
-					return 0;
-				}
-				else if (nReadFileSize == 0)           //读取文件完毕
-				{
-					unzCloseCurrentFile(unzfile);
-					CloseHandle(hFile);
-					break;
-				}
-				else									//写入读取的内容
-				{
-					DWORD dWrite = 0;
-					BOOL bWriteSuccessed = WriteFile(hFile, szReadBuffer, BUFFER_SIZE, &dWrite, NULL);
-					if (!bWriteSuccessed)
-					{
-						unzCloseCurrentFile(unzfile);
-						CloseHandle(hFile);
-						return 0;
-					}
-				}
-			}
-
-			free(szReadBuffer);
-		}
-		unzGoToNextFile(unzfile);
+		uninitializeFunc();
 	}
-
-	delete pFileInfo;
-
-	delete pGlobalInfo;
-
-	//关闭
-	if (unzfile)
+	else
 	{
-		unzClose(unzfile);
+		return 0;
 	}
-	return 1;
 }
-
-string& WNGlobal::replace_all(string& str, const string& old_value, const string& new_value)
+DWORD WNGlobal::ShellRun(CString csExe, CString csParam, DWORD nShow)
 {
-	while (true)
-	{
-		string::size_type   pos(0);
-		if ((pos = str.find(old_value)) != string::npos)
-			str.replace(pos, old_value.length(), new_value);
-		else
-			break;
-	}
-	return str;
-}
-
-
-BOOL WNGlobal::CreatedMultipleDirectory(const string& direct)
-{
-	string Directoryname = direct;
-	if (Directoryname[Directoryname.length() - 1] != '\\')
-	{
-		Directoryname.append(1, '\\');
-	}
-	vector<string> vpath;
-	string strtemp;
-	BOOL  bSuccess = FALSE;
-	for (int i = 0; i < Directoryname.length(); i++)
-	{
-		if (Directoryname[i] != '\\')
-		{
-			strtemp.append(1, Directoryname[i]);
-		}
-		else
-		{
-			vpath.push_back(strtemp);
-			strtemp.append(1, '\\');
-		}
-	}
-	vector< string>::iterator vIter = vpath.begin();
-	for (; vIter != vpath.end(); vIter++)
-	{
-		bSuccess = CreateDirectoryA(vIter->c_str(), NULL) ? TRUE : FALSE;
-	}
-	return bSuccess;
+	SHELLEXECUTEINFO ShExecInfo;
+	ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+	ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+	ShExecInfo.hwnd = NULL;
+	ShExecInfo.lpVerb = NULL;
+	ShExecInfo.lpFile = csExe;
+	ShExecInfo.lpParameters = csParam;
+	ShExecInfo.lpDirectory = NULL;
+	ShExecInfo.nShow = nShow;
+	ShExecInfo.hInstApp = NULL;
+	BOOL ret = ShellExecuteEx(&ShExecInfo);
+	WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
+	DWORD dwCode = 0;
+	GetExitCodeProcess(ShExecInfo.hProcess, &dwCode);
+	CloseHandle(ShExecInfo.hProcess);
+	return dwCode;
 }
