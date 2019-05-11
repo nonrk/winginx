@@ -173,7 +173,8 @@ void CWinNginxDlg::Init(){
 #endif
 	
 	CString mv = wng.GetFileVersion(wng.GetAppPath() + _T("\\application\\mysql\\bin\\mysql.exe"));
-	if (wng.IsFileExist(pv))
+
+	if (wng.IsFileExist(wng.GetAppPath() + _T("\\application\\php\\php.exe")))
 	{
 		vector <CString> pvi;
 		pvi = wng.SplitCString(pv, _T("."));
