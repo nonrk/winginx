@@ -41,6 +41,7 @@ BOOL WNruntimeDlg::OnInitDialog(){
 }
 void WNruntimeDlg::Init(){
 	m_list.AddString(_T("VC9 RunTime x86"));
+	m_list.AddString(_T("VC10 RunTime x86"));
 	m_list.AddString(_T("VC11 RunTime x86"));
 	m_list.AddString(_T("VC14 RunTime x86"));
 	m_list.AddString(_T("VC15 RunTime x86"));
@@ -61,15 +62,20 @@ void WNruntimeDlg::OnBtnStartInstall()
 	}
 	if (nIndex == 1)
 	{
-		CString dir = rwng.GetAppPath() + _T("\\redistributable\\vcredist_x86_11.exe");
+		CString dir = rwng.GetAppPath() + _T("\\redistributable\\vcredist_x86_10.exe");
 		rwng.ShellRun(dir, _T(""), SW_SHOW);
 	}
 	if (nIndex == 2)
 	{
-		CString dir = rwng.GetAppPath() + _T("\\redistributable\\vcredist_x86_14.exe");
+		CString dir = rwng.GetAppPath() + _T("\\redistributable\\vcredist_x86_11.exe");
 		rwng.ShellRun(dir, _T(""), SW_SHOW);
 	}
 	if (nIndex == 3)
+	{
+		CString dir = rwng.GetAppPath() + _T("\\redistributable\\vcredist_x86_14.exe");
+		rwng.ShellRun(dir, _T(""), SW_SHOW);
+	}
+	if (nIndex == 4)
 	{
 		CString dir = rwng.GetAppPath() + _T("\\redistributable\\vcredist_x86_15.exe");
 		rwng.ShellRun(dir, _T(""), SW_SHOW);

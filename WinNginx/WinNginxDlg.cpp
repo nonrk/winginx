@@ -33,7 +33,7 @@
 #define PHP_VSRSION_SEVENTHREE 73
 
 WNGlobal wng;
-vector <int> serverState = {0,0,0};
+vector <int> serverState = {0,0,0,0};
 long start_time;
 int php_version;
 class CAboutDlg : public CDialogEx
@@ -90,6 +90,9 @@ void CWinNginxDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BTN_DOMAIN, m_btn_web);
 	DDX_Control(pDX, IDC_BTN_RUNTIME, m_btn_runtime);
 	DDX_Control(pDX, IDC_BTN_SERVERBACK, m_btn_server_back);
+	DDX_Control(pDX, IDC_BTN_START_REDIS, m_btn_redis);
+	DDX_Control(pDX, IDC_STATE_REDIS, m_redis);
+	DDX_Control(pDX, IDC_REDIS_VERSION, m_info_redis);
 }
 
 BEGIN_MESSAGE_MAP(CWinNginxDlg, CDialogEx)
@@ -119,6 +122,8 @@ BEGIN_MESSAGE_MAP(CWinNginxDlg, CDialogEx)
 	ON_COMMAND(ID_MENU_SYSSET, &CWinNginxDlg::OnMenuSysSet)
 	ON_COMMAND(ID_MENU_PHPCONFIG, &CWinNginxDlg::OnMenuPhpConfig)
 	ON_COMMAND(ID_MENU_NGINXCONFIG, &CWinNginxDlg::OnMenuNginxConfig)
+	ON_BN_CLICKED(IDC_BTN_START_REDIS, &CWinNginxDlg::OnBtnStartRedis)
+	ON_COMMAND(ID_REDIS_COMMAND, &CWinNginxDlg::OnRedisCommand)
 END_MESSAGE_MAP()
 
 
@@ -166,6 +171,8 @@ void CWinNginxDlg::Init(){
 	CString pv = wng.GetFileVersion(wng.GetAppPath() + _T("\\application\\php\\php.exe"));
 	
 	vector <CString> nv = wng.getFileContent(wng.GetAppPath() + _T("\\application\\nginx\\version.txt"));
+
+	CString rv=wng.getConfig(_T("Redis"),_T("version"),wng.GetAppPath()+_T("\\application\\redis\\version.ini"));
 #if _DEBUG
 	CString sv = wng.GetFileVersion(wng.GetAppPath() + _T("\\winginxD.exe"));
 #else
@@ -173,7 +180,7 @@ void CWinNginxDlg::Init(){
 #endif
 	
 	CString mv = wng.GetFileVersion(wng.GetAppPath() + _T("\\application\\mysql\\bin\\mysql.exe"));
-	if (wng.IsFileExist(pv))
+	if (wng.IsFileExist(wng.GetAppPath() + _T("\\application\\php\\php.exe")))
 	{
 		vector <CString> pvi;
 		pvi = wng.SplitCString(pv, _T("."));
@@ -199,6 +206,7 @@ void CWinNginxDlg::Init(){
 	m_info_nginx.SetWindowText(nv[0]);
 	m_version.SetWindowText(sv);
 	m_info_mysql.SetWindowText(mv);
+	m_info_redis.SetWindowText(rv);
 	//按钮初始化
 	m_btn_stop.EnableWindow(FALSE);
 	
@@ -239,8 +247,22 @@ void CWinNginxDlg::Init(){
 		m_state_mysql.SetWindowText(_T("[已停止]"));
 
 	}
+	if (count(pid.begin(), pid.end(), _T("redis-server.exe")) != 0)
+	{
+		serverState[3] = 1;
+		m_redis.SetWindowText(_T("[已运行]"));
+		m_btn_redis.SetWindowText(_T("停止Redis"));
+
+	}
+	else
+	{
+		serverState[3] = 0;
+		m_redis.SetWindowText(_T("[已停止]"));
+		m_btn_redis.SetWindowText(_T("启动Redis"));
+
+	}
 	pid.swap(vector<CString>());
-	if ((serverState[0] + serverState[0] + serverState[0]) > 1)
+	if ((serverState[0] + serverState[1] + serverState[2]) > 1)
 	{
 		m_btn_start.EnableWindow(FALSE);
 		m_btn_stop.EnableWindow(TRUE);
@@ -257,8 +279,8 @@ void CWinNginxDlg::Init(){
 	dwStyle |= LVS_EX_GRIDLINES;
 	m_log.SetExtendedStyle(dwStyle);
 	dwStyle |= LVS_EX_FULLROWSELECT;
-	m_log.InsertColumn(0, NULL, LVCFMT_LEFT, 210);
-	m_log.InsertColumn(1, NULL, LVCFMT_LEFT, 140);
+	m_log.InsertColumn(0, NULL, LVCFMT_LEFT, 190);
+	m_log.InsertColumn(1, NULL, LVCFMT_LEFT, 130);
 	wng.writeLog(&m_log, _T("欢迎使用winginx"));
 	//初始化运行时间
 	start_time = GetTickCount();
@@ -453,7 +475,16 @@ HBRUSH CWinNginxDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 			pDC->SetTextColor(RGB(255, 0, 0));
 		}
 		break;
-	}
+	case IDC_STATE_REDIS:
+		if (serverState[3] != 0){
+			pDC->SetTextColor(RGB(0, 255, 0));
+		}
+		else
+		{
+			pDC->SetTextColor(RGB(255, 0, 0));
+		}
+		break;
+}
 	return hbr;
 }
 
@@ -471,7 +502,7 @@ void CWinNginxDlg::OnTimer(UINT_PTR nIDEvent)
 	{
 
 	case 1:
-		if ((serverState[0] + serverState[0] + serverState[0])>1)
+		if ((serverState[0] + serverState[2] + serverState[3])>1)
 		{
 			m_btn_start.EnableWindow(FALSE);
 			m_btn_stop.EnableWindow(TRUE);
@@ -516,6 +547,20 @@ void CWinNginxDlg::OnTimer(UINT_PTR nIDEvent)
 		{
 			serverState[2] = 0;
 			m_state_mysql.SetWindowText(_T("[已停止]"));
+
+		}
+		if (count(pid.begin(), pid.end(), _T("redis-server.exe")) != 0)
+		{
+			serverState[3] = 1;
+			m_redis.SetWindowText(_T("[已运行]"));
+			m_btn_redis.SetWindowText(_T("停止Redis"));
+
+		}
+		else
+		{
+			serverState[3] = 0;
+			m_redis.SetWindowText(_T("[已停止]"));
+			m_btn_redis.SetWindowText(_T("启动Redis"));
 
 		}
 		pid.swap(vector<CString>());
@@ -990,4 +1035,33 @@ void CWinNginxDlg::OnMenuNginxConfig()
 {
 	CString dir = wng.GetAppPath() + _T("\\application\\nginx\\conf\\nginx.conf");
 	wng.ShellRun(_T("notepad.exe "), dir, SW_SHOW);
+}
+
+
+void CWinNginxDlg::OnBtnStartRedis()
+{
+	if (serverState[3]==0)
+	{
+		ShellExecute(NULL, NULL, wng.GetAppPath() + _T("\\application\\redis\\start_redis.bat"), NULL, NULL, SW_HIDE);
+		wng.writeLog(&m_log, _T("启动redis..."));
+	} 
+	else
+	{
+		ShellExecute(NULL, NULL, wng.GetAppPath() + _T("\\application\\redis\\stop_redis.bat"), NULL, NULL, SW_HIDE);
+		wng.writeLog(&m_log, _T("停止redis..."));
+	}
+}
+
+
+void CWinNginxDlg::OnRedisCommand()
+{
+	if (serverState[3] == 1)
+	{
+		ShellExecute(NULL, NULL, wng.GetAppPath() + _T("\\application\\redis\\redis.bat"), NULL, NULL, SW_SHOW);
+	} 
+	else
+	{
+		AfxMessageBox(_T("请先启动redis服务..."));
+	}
+	
 }

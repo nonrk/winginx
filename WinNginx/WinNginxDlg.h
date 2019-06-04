@@ -83,4 +83,9 @@ public:
 	void DefPhpSet();
 	void switchPhpVersion(int version, int type);
 	void switchPhp(CString v, int Ids);
+	CButton m_btn_redis;
+	CStatic m_redis;
+	afx_msg void OnBtnStartRedis();
+	CStatic m_info_redis;
+	afx_msg void OnRedisCommand();
 };
