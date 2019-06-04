@@ -13,3 +13,4 @@ windows nginx php mysql server manage program!
 - php 7.1.13
 - mysql 5.6.43
 - nginx 1.14.2
+- redis 3.0.x
