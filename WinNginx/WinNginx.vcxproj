@@ -76,7 +76,7 @@
     <OutDir>$(SolutionDir)\winginx</OutDir>
     <IntDir>winginx\</IntDir>
     <IncludePath>D:\client\winginx\7zlib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <LibraryPath>D:\client\winginx\7zlib;$(LibraryPath)</LibraryPath>
     <ReferencePath>$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -92,7 +92,7 @@
     <OutDir>$(SolutionDir)\winginx</OutDir>
     <IntDir>winginx\</IntDir>
     <IncludePath>D:\client\winginx\7zlib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <LibraryPath>D:\client\winginx\7zlib;$(LibraryPath)</LibraryPath>
     <ReferencePath>$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

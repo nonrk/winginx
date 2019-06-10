@@ -94,7 +94,7 @@ void CWNaddwebDlg::AddWebSite(CString root, CString name, CString port, CString 
 	//Ìæ»»¹Ø¼ü×Ö
 	strText.Replace(_T("SERVER_DOMAIN"), domain);
 	strText.Replace(_T("SERVER_PORT"), port);
-	strText.Replace(_T("SERVER_ROOT"), root);
+	strText.Replace(_T("SERVER_ROOT"), root.Left(root.GetLength()-1));
 	//´´½¨
 	//File.SeekToEnd();
 	if (!awng.IsFileExist(awng.GetAppPath() + _T("\\application\\nginx\\conf\\vhost\\" + domain + _T(".conf")))){

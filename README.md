@@ -1,7 +1,17 @@
 # winginx
 windows nginx php mysql server manage program!
 
-项目附件包地址：链接: https://pan.baidu.com/s/1j8JD67cDYpU38wIxdLDd7A 提取码: di8k
+低配资源包（包含一个php7.1版本）winginx-pack-0.1.3L.rar
+
+程序包 （只包含包含必要程序版本）winginx-0.1.3_mini.rar
+
+完整版 winginx-0.1.3A.rar
+
+低配版 winginx-0.1.3L.zip
+
+完整资源包 winginx-pack-0.1.3A.rar
+
+统一下载地址：链接:https://pan.baidu.com/s/1BSawr-goGhWfLx3VvywkfA 提取码: pc1b
 
 附件包解压后的文件夹和exe同目录
 
