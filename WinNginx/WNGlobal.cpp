@@ -457,6 +457,10 @@ void WNGlobal::writeLog(CListCtrl *list,CString str){
 	int nIndex = list->GetItemCount();
 	list->InsertItem(nIndex, str);
 	list->SetItemText(nIndex, 1, init_time);
+	int nCount = list->GetItemCount();
+	if (nCount > 0)
+		list->EnsureVisible(nCount - 1, FALSE);
+
 }
 void WNGlobal::writeState(CListCtrl *list, CString str, CString state){
 	int nIndex = list->GetItemCount();
